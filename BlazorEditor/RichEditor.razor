@@ -1,0 +1,154 @@
+﻿@using Microsoft.JSInterop
+@using BlazorEditor.Models
+@inject IJSRuntime JS
+@namespace BlazorEditor
+
+<div id="@_editorContainerId" style="height:@Height; width:@Width; display: flex; flex-direction: column;">
+    <div id="@_toolbarId" class="ql-toolbar" style="flex: 0 0 auto;"></div>
+    <div id="@_editorInnerId" class="ql-container ql-snow" style="flex: 1; overflow-y: auto;"></div>
+</div>
+
+@code {
+    [Parameter]
+    public string Height { get; set; } = "300px"; // 默认高度为300px
+
+    [Parameter]
+    public string Width { get; set; } = "100%"; // 默认宽度为100%
+
+    [Parameter]
+    public string Placeholder { get; set; } = "Compose an epic..."; // 默认占位符
+
+    [Parameter]
+    public string ToolbarOptions { get; set; } = "true"; // 默认工具栏为true
+
+    [Parameter]
+    public string Theme { get; set; } = "snow"; // 默认主题为'snow'
+    [Parameter]
+    public bool UploadImage { get; set; } = true; // 默认上传图片
+    [Parameter]
+    public string ImageAPI { get; set; } = "/api/upload/image"; // 默认API为"/api/upload/image"
+
+    [Parameter]
+    public EventCallback<string> OnContentChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnDeltaContentChanged { get; set; }
+
+    private IJSObjectReference? _module;
+    private string _editorContainerId = $"editorContainer_{Guid.NewGuid()}";
+    private string _toolbarId => $"{_editorContainerId}-toolbar";
+    private string _editorInnerId => $"{_editorContainerId}-editor";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // 动态加载 Quill 模块，使用绝对路径
+                _module = await JS.InvokeAsync<IJSObjectReference>("import", "/_content/BlazorEditor/js/quillInterop.js");
+
+                // 创建 DotNetObjectReference 以供 JavaScript 调用
+                var objRef = DotNetObjectReference.Create(this);
+
+                // 初始化 Quill，传递工具栏 ID、编辑器 ID、工具栏选项、占位符内容、DotNetObjectReference 和主题
+                await _module.InvokeVoidAsync("initializeEditor", _toolbarId, _editorInnerId, ToolbarOptions, Placeholder, objRef, Theme, UploadImage,ImageAPI);
+            }
+            catch (JSException jsEx)
+            {
+                Console.Error.WriteLine($"JS Exception: {jsEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Exception: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 接收来自 JavaScript 的内容变化事件。
+    /// </summary>
+    /// <param name="content">编辑器的新内容（Delta JSON 字符串）。</param>
+    [JSInvokable]
+    public async Task ReceiveDeltaContentChanged(string content)
+    {
+        if (OnDeltaContentChanged.HasDelegate)
+        {
+            await OnDeltaContentChanged.InvokeAsync(content);
+        }
+    }
+    /// <summary>
+    /// 接收来自 JavaScript 的内容变化事件。
+    /// </summary>
+    /// <param name="content">编辑器的新内容（Delta JSON 字符串）。</param>
+    [JSInvokable]
+    public async Task ReceiveContentChanged(string content)
+    {
+        if (OnContentChanged.HasDelegate)
+        {
+            await OnContentChanged.InvokeAsync(content);
+        }
+    }
+
+    /// <summary>
+    /// 获取编辑器的内容（HTML）。
+    /// </summary>
+    /// <returns>编辑器内容的 HTML 字符串。</returns>
+    public async Task<string> GetContentAsync()
+    {
+        if (_module != null)
+        {
+            return await _module.InvokeAsync<string>("getEditorContent", _editorInnerId);
+        }
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// 获取编辑器的内容（Delta）。
+    /// </summary>
+    /// <returns>编辑器内容的 Delta 对象。</returns>
+    public async Task<Delta> GetDeltaAsync()
+    {
+        if (_module != null)
+        {
+            var deltaJson = await _module.InvokeAsync<string>("getEditorDelta", _editorInnerId);
+            return System.Text.Json.JsonSerializer.Deserialize<Delta>(deltaJson);
+        }
+        return new Delta();
+    }
+
+    /// <summary>
+    /// 设置编辑器的内容（HTML）。
+    /// </summary>
+    /// <param name="content">要设置的 HTML 内容。</param>
+    public async Task SetContentAsync(string content)
+    {
+        if (_module != null)
+        {
+            await _module.InvokeVoidAsync("setEditorContent", _editorInnerId, content);
+        }
+    }
+
+    /// <summary>
+    /// 设置编辑器的内容（Delta）。
+    /// </summary>
+    /// <param name="delta">要设置的 Delta 对象。</param>
+    public async Task SetDeltaAsync(Delta delta)
+    {
+        if (_module != null)
+        {
+            var deltaJson = System.Text.Json.JsonSerializer.Serialize(delta);
+            await _module.InvokeVoidAsync("setEditorDelta", _editorInnerId, deltaJson);
+        }
+    }
+
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module != null)
+        {
+            await _module.InvokeVoidAsync("disposeEditor", _toolbarId, _editorInnerId);
+            await _module.DisposeAsync();
+        }
+    }
+}

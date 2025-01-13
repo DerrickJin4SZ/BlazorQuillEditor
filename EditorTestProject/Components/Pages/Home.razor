@@ -1,0 +1,119 @@
+﻿@page "/"
+@using BlazorEditor.Models
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<!-- 使用 @ref 引用 RichEditor 组件 -->
+<!--
+    ["bold", "italic", "underline", "strike"],       // 加粗 斜体 下划线 删除线
+    ["blockquote", "code-block"],                    // 引用  代码块
+    [{ list: "ordered" }, { list: "bullet" }],       // 有序、无序列表
+    [{ indent: "-1" }, { indent: "+1" }],            // 缩进
+    [{ size: ["small", false, "large", "huge"] }],   // 字体大小
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],         // 标题
+    [{ color: [] }, { background: [] }],             // 字体颜色、字体背景颜色
+    [{ align: [] }],                                 // 对齐方式
+    ["clean"],                                       // 清除文本格式
+    ["link", "image"]                       // 链接、图片、视频
+-->
+<div style="width: 100%; max-width: 800px; margin: auto; height: 400px;">
+    <RichEditor @ref="richEditor"
+                Height="100%"
+                Width="100%"
+                Placeholder="请输入内容..."
+                ToolbarOptions='{"container":[["bold", "italic", "underline","strike"],["blockquote","code-block"],[{"list": "ordered"}, {"list": "bullet"}],[{ "size": ["small", false, "large", "huge"] }],[{ "header": [1, 2, 3, 4, 5, 6, false] }],[{ "color": [] }, { "background": [] }],[{ "align": [] }],["clean"], ["image", "video"]]}'
+                Theme="snow"
+                UploadImage=true
+                OnContentChanged="HandleContentChanged"
+                OnDeltaContentChanged="HandleDeltaContentChanged">
+    </RichEditor>
+</div>
+
+<!-- 使用按钮调用 API 方法 -->
+<div style="margin-top: 20px;">
+    <button @onclick="GetEditorContent">获取编辑器内容 (HTML)</button>
+    <button @onclick="GetEditorDelta">获取编辑器内容 (Delta)</button>
+    <button @onclick="SetEditorContent">设置编辑器内容 (HTML)</button>
+    <button @onclick="SetEditorDelta">设置编辑器内容 (Delta)</button>
+</div>
+
+<p>编辑器内容 (HTML)：</p>
+<div style="border: 1px solid #ccc; padding: 10px; min-height: 100px;">
+    @((MarkupString)editorContent)
+</div>
+
+<p>编辑器内容 (Delta)：</p>
+<div style="border: 1px solid #ccc; padding: 10px; min-height: 100px;">
+    @deltaContent
+</div>
+
+@code {
+    private string editorContent = string.Empty;
+    private string deltaContent = string.Empty;
+    private RichEditor richEditor;
+
+    private void HandleDeltaContentChanged(string content)
+    {
+        // 这里 content 是 Delta JSON 字符串
+        deltaContent = content;
+        Console.WriteLine($"Editor Delta Updated: {content}");
+    }
+
+    private void HandleContentChanged(string content)
+    {
+        // 这里 content 是 Delta JSON 字符串
+        editorContent = content;
+        Console.WriteLine($"Editor Delta Updated: {content}");
+    }
+
+    private async Task GetEditorContent()
+    {
+        if (richEditor != null)
+        {
+            editorContent = await richEditor.GetContentAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetEditorDelta()
+    {
+        if (richEditor != null)
+        {
+            var delta = await richEditor.GetDeltaAsync();
+            deltaContent = System.Text.Json.JsonSerializer.Serialize(delta, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetEditorContent()
+    {
+        if (richEditor != null)
+        {
+            string newContent = "<p>这是通过 API 设置的内容。</p><img src='https://example.com/image.jpg' alt='Example Image'/>";
+            await richEditor.SetContentAsync(newContent);
+        }
+    }
+
+    private async Task SetEditorDelta()
+    {
+        if (richEditor != null)
+        {
+            var newDelta = new Delta
+                {
+                    Ops = new List<Op>
+            {
+                new Op { Insert = "这是通过 Delta 设置的内容。\n" },
+                new Op { Insert = new { image = "https://example.com/image.jpg" } },
+                new Op { Insert = "插入的视频：" },
+                new Op { Insert = new { video = "https://www.youtube.com/embed/dQw4w9WgXcQ" } }
+            }
+                };
+            await richEditor.SetDeltaAsync(newDelta);
+        }
+    }
+
+}

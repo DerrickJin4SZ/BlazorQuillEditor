@@ -1,0 +1,35 @@
+﻿.my-component {
+    border: 2px dashed red;
+    padding: 1em;
+    margin: 1em 0;
+    background-image: url('background.png');
+}
+/* 确保 Quill 工具栏和编辑区域宽度一致 */
+.ql-toolbar, .ql-container {
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+    /* 调整工具栏按钮的样式 */
+    .ql-toolbar button, .ql-toolbar select {
+        width: auto;
+    }
+
+.ql-toolbar {
+    height: 40px; /* 根据你的 toolbar 的实际高度调整 */
+}
+
+.ql-container {
+    flex: 1;
+    overflow-y: auto; /* 确保编辑区域可以滚动 */
+}
+
+.ql-container {
+    flex: 1 1 auto; /* 编辑区域占据剩余空间 */
+}
+
+/* 可选：自定义编辑器和工具栏的高度 */
+#editorContainer_*, #editorContainer_*-editor, #editorContainer_*-toolbar {
+    height: 100%;
+}
+
