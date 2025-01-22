@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>BlazorQuillEditor</PackageId>
+    <!-- NuGet 包 ID -->
+    <Version>1.0.4</Version>
+    <!-- 包版本 -->
+    <Authors>DerrickJin</Authors>
+    <!-- 作者 -->
+    <Description>Blazor QuillEditor</Description>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <EnableDefaultStaticAssets>true</EnableDefaultStaticAssets>
+    <!-- 描述 -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.8" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="wwwroot\**" Pack="true"  />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="RichEditor.razor" />
+    <None Remove="RichEditor.razor.css" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="RichEditor.razor" />
+    <Content Include="RichEditor.razor.css" />
+  </ItemGroup>
+
+</Project>

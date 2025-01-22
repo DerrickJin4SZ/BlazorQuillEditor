@@ -46,7 +46,7 @@
             try
             {
                 // 动态加载 Quill 模块，使用绝对路径
-                _module = await JS.InvokeAsync<IJSObjectReference>("import", "/_content/BlazorEditor/js/quillInterop.js");
+                _module = await JS.InvokeAsync<IJSObjectReference>("import", "/_content/BlazorQuillEditor/js/quillInterop.js");
 
                 // 创建 DotNetObjectReference 以供 JavaScript 调用
                 var objRef = DotNetObjectReference.Create(this);

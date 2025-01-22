@@ -27,9 +27,3 @@
 .ql-container {
     flex: 1 1 auto; /* 编辑区域占据剩余空间 */
 }
-
-/* 可选：自定义编辑器和工具栏的高度 */
-#editorContainer_*, #editorContainer_*-editor, #editorContainer_*-toolbar {
-    height: 100%;
-}
-
